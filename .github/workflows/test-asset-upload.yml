@@ -10,8 +10,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: upload reame
-      uses: actions/qm-release-upload-asset@v1
+      uses: ./
       with:
-        paths: ['./README.md']
+        paths: '["./README.md"]'
 
     
