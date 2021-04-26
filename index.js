@@ -71,4 +71,8 @@ async function run() {
   }
 }
 
-await run()
+run().then(res=>{
+  console.log('Assets uploaded')
+},rej=>{
+  core.setFailed(rej);
+})
