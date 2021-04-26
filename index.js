@@ -10,6 +10,8 @@ const glob = require('glob')
 async function run() {
   try {
     const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
+    
+    
     const getRelease = new GetRelease(octokit, github.context)
 
     const uploadUrl = await getRelease.getURL()
@@ -32,30 +34,25 @@ async function run() {
             assetsToUpload.push(file)
         }
       }else {
-        assetsToUpload.push(assetPath)
+        assetsToUpload.push(assetPath) //change this to match case that the name of the asset is a dir
       }
     }
 
     core.debug(`Asset to upload: ${assetsToUpload}`)
 
-    downloadURLs = []
     for(let i = 0; i < assetsToUpload.length; i++) {
       let asset = assetsToUpload[i];
 
-      // Determine content-length for header to upload asset
-      const contentLength = filePath => fs.statSync(filePath).size;
-      const contentType = "binary/octet-stream"
-      // Setup headers for API call, see Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-upload-release-asset for more information
+      const contentLength = filePath => fs.statSync(filePath).size; // Calc content-length for header to upload asset
+      
       const headers = { 
-        'content-type': contentType, 
+        'content-type': "binary/octet-stream", 
         'content-length': contentLength(asset)
       };
   
       const assetName = path.basename(asset)
-      console.log(`Uploading ${assetName}`)
+      console.log(`Uploading ${assetName}...`)
 
-      // Upload a release asset
-      // API Documentation: https://developer.github.com/v3/repos/releases/#upload-a-release-asset
       // Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-upload-release-asset
       const uploadAssetResponse = await octokit.repos.uploadReleaseAsset({
         url: uploadUrl,
@@ -69,11 +66,9 @@ async function run() {
         data: { browser_download_url: browserDownloadUrl }
       } = uploadAssetResponse;
   
-      // Set the output variable for use by other actions: https://github.com/actions/toolkit/tree/master/packages/core#inputsoutputs
-      downloadURLs.push(browserDownloadUrl)
+      
     }
 
-    core.setOutput('browser_download_urls', JSON.stringify(downloadURLs));
   } catch (error) {
     core.setFailed(error.message);
   }
