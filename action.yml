@@ -1,11 +1,8 @@
 name: 'qm-release-upload-asset'
 description: 'Uploads artifacts to a release'
 inputs:
-  ref:  # the ref of the release
-    description: 'The ref of the release.'
-    required: true
   paths:
     description: 'Single or array of paths to upload'
 runs:
   using: 'node12'
-  main: 'index.js'
+  main: 'dist/index.js'
