@@ -12,6 +12,6 @@ jobs:
     - name: upload reame
       uses: ./
       with:
-        paths: '["./README.md"]'
+        paths: '[\"./README.md\"]'
 
     
