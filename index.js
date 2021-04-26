@@ -9,15 +9,15 @@ async function run() {
   try {
     const octokit = github.getOctokit(github.token);
     let parts = github.ref.split('/')
-    let tagName=parts[parts.length-1]
-    
+    let tagName = parts[parts.length - 1]
+
     //see https://octokit.github.io/rest.js/v18#repos-get-release-by-tag
-    const {upload_url}=octokit.rest.repos.getReleaseByTag({
-      owner:github.repository_owner,
-      repo:github.repository.substring(github.repository_owner.length),
+    const { upload_url } = octokit.rest.repos.getReleaseByTag({
+      owner: github.repository_owner,
+      repo: github.repository.substring(github.repository_owner.length),
       tagName,
     });
-    
+
     console.log(`Asset upload url ${upload_url}`)
 
     // Get the inputs from the workflow file: https://github.com/actions/toolkit/tree/master/packages/core#inputsoutputs
@@ -64,7 +64,7 @@ async function run() {
         name: assetName,
         data: fs.readFileSync(asset)
       });
-      console.log(`Upload result: ${JSON.stringify(uploadAssetResponse," ",2)}`)
+      console.log(`Upload result: ${JSON.stringify(uploadAssetResponse, " ", 2)}`)
     }
   } catch (error) {
     core.setFailed(error.message);
