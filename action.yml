@@ -1,4 +1,4 @@
-name: 'qm-release-upload-asset'
+name: 'qm-upload-release-asset'
 description: 'Uploads artifacts to a release'
 inputs:
   token:
