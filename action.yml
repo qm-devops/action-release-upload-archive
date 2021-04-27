@@ -1,0 +1,13 @@
+name: 'qm-release-upload-asset'
+description: 'Uploads artifacts to a release'
+inputs:
+  token:
+    description: 'API token such as secrets.GITHUB_TOKEN'
+    required: true
+  path:
+    description: 'String or string lines'
+    required: true
+  
+runs:
+  using: 'node12'
+  main: 'dist/index.js'

@@ -1,0 +1,27 @@
+{
+  "name": "action-release-upload-archive",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qm-devops/action-release-upload-archive.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/qm-devops/action-release-upload-archive/issues"
+  },
+  "homepage": "https://github.com/qm-devops/action-release-upload-archive#readme",
+  "dependencies": {
+    "@actions/core": "^1.2.7",
+    "@actions/github": "^4.0.0",
+    "@octokit/auth-action": "^1.3.2",
+    "@vercel/ncc": "^0.28.3",
+    "glob": "^7.1.6"
+  }
+}

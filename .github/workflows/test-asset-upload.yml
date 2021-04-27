@@ -1,0 +1,17 @@
+on:
+  release:
+    types: [created]
+
+jobs:
+  upload_asset:
+    runs-on: ubuntu-latest
+    name: Test asset upload
+    steps:
+      - uses: actions/checkout@v2
+      - name: upload reame
+        uses: ./
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}
+          repo: ${{github.repository}}
+          ref: ${{github.ref}}
+          paths: '["./README.md"]'
