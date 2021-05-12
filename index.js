@@ -3,79 +3,97 @@ const github = require('@actions/github');
 
 const path = require('path');
 const fs = require('fs');
-const GetRelease = require('./get-release')
-const glob = require('glob')
+const glob = require('glob');
+
+
+function uploadAsset(apiToken, owner, repo, releaseID, asset) {
+  return new Promise((resolve, reject) => {
+    const octokit = github.getOctokit(apiToken);
+    const contentLength = filePath => fs.statSync(filePath).size; // Calc content-length for header to upload asset
+
+    const headers = {
+      'content-type': "binary/octet-stream",
+      'content-length': contentLength(asset)
+    };
+
+    const assetName = path.basename(asset)
+
+    console.log(`Uploading ${asset} ...`)
+
+    octokit.repos.uploadReleaseAsset({
+      owner: owner,
+      repo: repo,
+      release_id: releaseID,
+      headers,
+      name: assetName,
+      data: fs.readFileSync(asset)
+    }).then(uploadAssetResponse => {
+      if (uploadAssetResponse.status < 400) {
+        resolve(uploadAssetResponse)
+      } else {
+        reject(new Error(`Failed to upload resource with status code ${uploadAssetResponse.status}`))
+      }
+    }, err => {
+      reject(err)
+    });
+  })
+}
 
 async function run() {
   try {
-    const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
-    const getRelease = new GetRelease(octokit, github.context)
+    const apiToken = core.getInput('token', { required: true }) || ''
+    const inRepo = github.context.payload.repository.full_name
+    const ownerSplitter = inRepo.indexOf('/')
+    const owner = inRepo.substring(0, ownerSplitter)
+    const repo = inRepo.substring(ownerSplitter + 1)
+    const releaseID = github.context.payload.release.id
 
-    const uploadUrl = await getRelease.getURL()
+    const assetPathsSt = core.getInput('path', { required: true }) || '';
 
-    // Get the inputs from the workflow file: https://github.com/actions/toolkit/tree/master/packages/core#inputsoutputs
-    const assetPathsSt = core.getInput('paths', { required: true });
-
-    const assetPaths = JSON.parse(assetPathsSt)
-    if(!assetPaths || assetPaths.length == 0) {
-      core.setFailed("asset_paths must contain a JSON array of quoted paths");
-      return
+    const assetPaths = assetPathsSt.split('\n')
+    if (!assetPaths || assetPaths.length == 0) {
+      throw new Error("asset_paths must contain a JSON array of quoted paths");
     }
-
+    console.log(`Search for files unders: ${assetPaths}`)
     let assetsToUpload = []
-    for(let i = 0; i < assetPaths.length; i++) {
+    for (let i = 0; i < assetPaths.length; i++) {
       let assetPath = assetPaths[i];
-      if(assetPath.indexOf("*") > -1) {
-        const files = glob.sync(assetPath,{ nodir: true })
+      
+      if (assetPath.indexOf("*") > -1) {
+        const files = glob.sync(assetPath, { nodir: true })
         for (const file of files) {
-            assetsToUpload.push(file)
+          assetsToUpload.push(file)
         }
-      }else {
-        assetsToUpload.push(assetPath)
+      } else {
+        assetsToUpload.push(assetPath) //change this to match case that the name of the asset is a dir
       }
     }
 
-    core.debug(`Asset to upload: ${assetsToUpload}`)
-
-    downloadURLs = []
-    for(let i = 0; i < assetsToUpload.length; i++) {
-      let asset = assetsToUpload[i];
-
-      // Determine content-length for header to upload asset
-      const contentLength = filePath => fs.statSync(filePath).size;
-      const contentType = "binary/octet-stream"
-      // Setup headers for API call, see Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-upload-release-asset for more information
-      const headers = { 
-        'content-type': contentType, 
-        'content-length': contentLength(asset)
-      };
-  
-      const assetName = path.basename(asset)
-      console.log(`Uploading ${assetName}`)
-
-      // Upload a release asset
-      // API Documentation: https://developer.github.com/v3/repos/releases/#upload-a-release-asset
-      // Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-upload-release-asset
-      const uploadAssetResponse = await octokit.repos.uploadReleaseAsset({
-        url: uploadUrl,
-        headers,
-        name: assetName,
-        data: fs.readFileSync(asset)
-      });
-  
-      // Get the browser_download_url for the uploaded release asset from the response
-      const {
-        data: { browser_download_url: browserDownloadUrl }
-      } = uploadAssetResponse;
-  
-      // Set the output variable for use by other actions: https://github.com/actions/toolkit/tree/master/packages/core#inputsoutputs
-      downloadURLs.push(browserDownloadUrl)
+    if (Array.isArray(assetsToUpload) && assetsToUpload.length<1){
+      console.log('No file to upload')
+    }else{
+      console.log(`Uploading ${assetsToUpload.length} files`) 
     }
+    
+    let f = function () {
+      let uploads = []
+      for (let i = 0; i < assetsToUpload.length; i++) {
+        let asset = assetsToUpload[i];
+        uploads.push(uploadAsset(apiToken, owner, repo, releaseID, asset))
+      }
+      return Promise.all(uploads)
+    }
+    await f()
 
-    core.setOutput('browser_download_urls', JSON.stringify(downloadURLs));
   } catch (error) {
-    core.setFailed(error.message);
+    console.log(error)
+    throw error
   }
 }
 
-await run()
+run().then(res => {
+  console.log('Assets uploaded')
+}, rej => {
+  console.log('Failed to upload ', rej)
+  core.setFailed(rej);
+})

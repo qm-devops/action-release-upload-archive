@@ -1,11 +1,13 @@
-name: 'qm-release-upload-asset'
+name: 'qm-upload-release-assets'
 description: 'Uploads artifacts to a release'
 inputs:
-  ref:  # the ref of the release
-    description: 'The ref of the release.'
+  token:
+    description: 'API token such as secrets.GITHUB_TOKEN'
     required: true
-  paths:
-    description: 'Single or array of paths to upload'
+  path:
+    description: 'String or string lines'
+    required: true
+  
 runs:
   using: 'node12'
-  main: 'index.js'
+  main: 'dist/index.js'
