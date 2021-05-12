@@ -3,7 +3,6 @@ const github = require('@actions/github');
 
 const path = require('path');
 const fs = require('fs');
-const { pathToFileURL } = require('url');
 const GetRelease = require('./get-release')
 const glob = require('glob')
 
